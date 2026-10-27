@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="Application mobile pour techniciens itinérants Johnson Health Tech" />
+  <meta name="theme-color" content="#c0392b" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="JHT Tech" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+
+  <title>JHT Tech App</title>
+  <link rel="stylesheet" href="./css/style.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════
+       HEADER — Sticky, toujours visible
+  ════════════════════════════════════════════════════ -->
+  <header class="app-header" role="banner">
+    <div class="header-brand">
+      <div class="header-logo" aria-hidden="true">JHT</div>
+      <span class="header-title">Tech App</span>
+    </div>
+    <div class="header-right">
+      <span id="header-technicien" class="header-technicien" aria-label="Technicien connecté"></span>
+      <button id="btn-settings" class="btn-icon" aria-label="Paramètres" title="Paramètres">⚙️</button>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════════════
+       BANDEAU OFFLINE
+  ════════════════════════════════════════════════════ -->
+  <div id="offline-banner" role="alert" aria-live="polite">
+    <span>📡</span>
+    <span>Mode hors ligne — les données seront synchronisées au retour du réseau</span>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       VUE 0 — Configuration
+  ════════════════════════════════════════════════════ -->
+  <main id="view-config" class="view" role="main" aria-label="Configuration">
+    <div class="config-header">
+      <div class="logo-large" aria-hidden="true">JHT</div>
+      <h1>JHT Tech App</h1>
+      <p>Configurez votre accès pour commencer</p>
+    </div>
+
+    <div class="form-card">
+      <h2>👤 Votre identifiant</h2>
+
+      <div class="form-group">
+        <label for="config-email">Email technicien</label>
+        <input
+          type="email"
+          id="config-email"
+          placeholder="ex: abraham.randria@matrixfitness.nl"
+          autocomplete="email"
+          inputmode="email"
+          aria-required="true"
+        />
+      </div>
+    </div>
+
+    <div class="form-card">
+      <h2>🔗 Connexion Google Sheets</h2>
+
+      <div class="form-group">
+        <label for="config-url">URL Apps Script</label>
+        <input
+          type="url"
+          id="config-url"
+          placeholder="https://script.google.com/macros/s/…/exec"
+          autocomplete="off"
+          inputmode="url"
+          aria-required="true"
+        />
+        <p style="font-size:0.75rem;color:#6b7280;margin-top:6px;">
+          URL fournie par l'administrateur. Permet la synchronisation avec Google Sheets.
+        </p>
+      </div>
+    </div>
+
+    <button id="btn-save-config" class="btn btn--primary" aria-label="Enregistrer la configuration">
+      ✅ Enregistrer et démarrer
+    </button>
+  </main>
+
+  <!-- ═══════════════════════════════════════════════════
+       VUE 1 — Liste des interventions
+  ════════════════════════════════════════════════════ -->
+  <main id="view-list" class="view" role="main" aria-label="Liste des interventions">
+    <div class="list-header">
+      <h2>Mes interventions</h2>
+      <button id="btn-refresh" class="btn-refresh" aria-label="Actualiser depuis Google Sheets">
+        🔄 Actualiser
+      </button>
+    </div>
+
+    <!-- Conteneur des cards -->
+    <div id="intervention-list" role="list" aria-label="Interventions">
+      <!-- Généré dynamiquement par app.js -->
+    </div>
+
+    <!-- État vide -->
+    <div id="list-empty" style="display:none;" aria-live="polite">
+      <div class="empty-icon" aria-hidden="true">📋</div>
+      <p class="empty-title">Aucune intervention</p>
+      <p class="empty-subtitle">
+        Appuyez sur <strong>Actualiser</strong> pour récupérer vos interventions<br/>
+        depuis Google Sheets, ou créez-en une manuellement.
+      </p>
+    </div>
+
+    <!-- FAB — Nouvelle intervention -->
+    <button id="btn-new" class="fab" aria-label="Nouvelle intervention" title="Nouvelle intervention">
+      +
+    </button>
+  </main>
+
+  <!-- ═══════════════════════════════════════════════════
+       VUE 2 — Détail / Formulaire intervention
+  ════════════════════════════════════════════════════ -->
+  <main id="view-detail" class="view" role="main" aria-label="Détail de l'intervention">
+
+    <!-- Barre de navigation interne -->
+    <nav class="detail-nav" aria-label="Navigation détail">
+      <button id="btn-back" class="btn-back" aria-label="Retour à la liste">
+        ‹ Retour
+      </button>
+      <span class="detail-nav-title" aria-hidden="true">Rapport d'intervention</span>
+    </nav>
+
+    <div class="detail-content">
+
+      <!-- ── Section info (read-only) ── -->
+      <section class="section-header-info" aria-label="Informations intervention">
+        <div class="info-row">
+          <span class="info-label">Client</span>
+          <span class="info-value" id="detail-client" aria-label="Nom du client">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Case No</span>
+          <span class="info-value" id="detail-case-no" aria-label="Numéro de dossier">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">N° Incident</span>
+          <span class="info-value" id="detail-incident-no" aria-label="Numéro d'incident">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Produit</span>
+          <span class="info-value" id="detail-product" aria-label="Nom du produit">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">N° Série</span>
+          <span class="info-value" id="detail-serial" aria-label="Numéro de série">—</span>
+        </div>
+      </section>
+
+      <!-- ── Défaut signalé ── -->
+      <div class="defect-section" aria-label="Défaut signalé">
+        <div class="defect-label">⚠️ Défaut signalé</div>
+        <div class="defect-text" id="detail-defect">—</div>
+      </div>
+
+      <!-- ── Rapport ── -->
+      <section class="section-rapport" aria-label="Rapport d'intervention">
+        <h2>📝 Rapport</h2>
+
+        <!-- Statut avec Scheduled ajouté -->
+        <div class="form-group">
+          <label for="detail-status">Statut de l'intervention</label>
+          <select id="detail-status" aria-required="true">
+            <option value="Scheduled">Scheduled</option>
+            <option value="Complete">Complete</option>
+            <option value="Further Action">Further Action</option>
+          </select>
+        </div>
+
+        <!-- Dates & heures (Date de fin supprimée) -->
+        <div class="row-2col">
+          <div class="form-group">
+            <label for="detail-date-debut">Date de début</label>
+            <input type="date" id="detail-date-debut" aria-required="true" />
+          </div>
+          <div class="form-group">
+            <label for="detail-heure-debut">Heure début</label>
+            <input type="time" id="detail-heure-debut" placeholder="HH:MM" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="detail-heure-fin">Heure fin</label>
+          <input type="time" id="detail-heure-fin" placeholder="HH:MM" />
+        </div>
+
+        <!-- TTR Deviation Code -->
+        <div class="form-group">
+          <label for="detail-ttr">TTR Deviation Code</label>
+          <select id="detail-ttr" aria-required="true">
+            <option value="">— Sélectionner —</option>
+            <!-- Généré dynamiquement par app.js -->
+          </select>
+        </div>
+      </section>
+
+      <!-- ── Pièces détachées ── -->
+      <section class="section-pieces" aria-label="Pièces détachées">
+        <h2>🔧 Pièces détachées</h2>
+        <div id="pieces-container">
+          <!-- Généré dynamiquement par app.js -->
+        </div>
+      </section>
+
+      <!-- ── Travaux effectués ── -->
+      <section class="section-travaux" aria-label="Travaux effectués">
+        <h2>✅ Travaux effectués</h2>
+        <div class="form-group">
+          <label for="detail-travaux">Description des travaux</label>
+          <textarea
+            id="detail-travaux"
+            placeholder="Décrivez les travaux réalisés, les tests effectués, les observations…"
+            aria-required="true"
+            rows="6"
+          ></textarea>
+        </div>
+      </section>
+
+      <!-- ── Pièces jointes / Photos ── -->
+      <section class="section-attachments" aria-label="Pièces jointes">
+        <h2>📎 Pièces jointes</h2>
+        <div class="form-group">
+          <label for="file-input" class="btn btn--secondary" style="display: inline-block; text-align: center; cursor: pointer; padding: 10px 16px; background: #e0e0e0; border-radius: 6px; font-weight: bold; color: #333;">
+            📁 Choisir une photo de la bibliothèque
+          </label>
+          <input type="file" id="file-input" accept="image/*" style="display: none;" />
+        </div>
+        <div id="attachments-preview" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+          <!-- Aperçu des photos sélectionnées -->
+        </div>
+      </section>
+
+      <!-- ── Indicateur de sync ── -->
+      <div id="sync-status" class="sync-status sync-status--pending" aria-live="polite">
+        ⏳ Enregistré localement — en attente de sync
+      </div>
+
+      <!-- Espace pour le footer fixe -->
+      <div style="height: 16px;" aria-hidden="true"></div>
+
+    </div><!-- /detail-content -->
+
+    <!-- Footer sticky avec bouton save -->
+    <div class="detail-footer" role="toolbar" aria-label="Actions">
+      <button id="btn-save" class="btn btn--save" aria-label="Enregistrer et synchroniser l'intervention">
+        💾 Enregistrer &amp; Synchroniser
+      </button>
+    </div>
+
+  </main><!-- /view-detail -->
+
+  <!-- ═══════════════════════════════════════════════════
+       SCRIPTS
+  ════════════════════════════════════════════════════ -->
+  <script src="./js/db.js"></script>
+  <script src="./js/sync.js"></script>
+  <script src="./js/app.js"></script>
+
+</body>
+</html>
